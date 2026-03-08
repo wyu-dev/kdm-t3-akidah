@@ -1,23 +1,15 @@
-// ============================================================
-// KAFA Digital — Service Worker v2
-// Path relatif — sesuai untuk Workers & Pages
-// ============================================================
-
-const CACHE_NAME = 'kafa-digital-v2';
-const BASE = self.location.pathname.replace('/sw.js', '');
+const CACHE_NAME = 'kafa-digital-v3';
 
 const FAIL_CACHE = [
-  BASE + '/index.html',
-  BASE + '/kafa-digital-full.html',
-  BASE + '/akidah-tahun3_1-data.js',
-  BASE + '/manifest.json',
-  BASE + '/pwa-icons/icon-192.png',
-  BASE + '/pwa-icons/icon-512.png',
+  './',
+  './index.html',
+  './akidah-tahun3_1-data.js',
+  './manifest.json',
+  './pwa-icons/icon-192.png',
+  './pwa-icons/icon-512.png',
 ];
 
-// ── INSTALL ──
 self.addEventListener('install', event => {
-  console.log('[SW v2] Install, base:', BASE);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(FAIL_CACHE))
@@ -25,7 +17,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// ── ACTIVATE: buang cache lama ──
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
@@ -34,7 +25,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── FETCH: Cache First ──
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   if (event.request.url.startsWith('chrome-extension://')) return;
@@ -42,16 +32,14 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-
       return fetch(event.request).then(response => {
         if (response && response.status === 200 && response.type !== 'opaque') {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
         }
         return response;
       }).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match(BASE + '/kafa-digital-full.html');
-        }
+        // Fallback ke index.html untuk semua request dokumen
+        return caches.match('./index.html');
       });
     })
   );
